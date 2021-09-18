@@ -11,9 +11,15 @@ vcam-util: vcam-util.c vcam.h
 	$(CC) $(CFLAGS_utils) -o $@ $<
 
 kmod:
-	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) CFLAGS_MODULE='-DDEBUG' modules
 
 .PHONY: clean
 clean:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	$(RM) vcam-util
+
+install:
+	sudo insmod vcam.ko
+
+remove:
+	sudo rmmod vcam.ko

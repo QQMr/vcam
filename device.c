@@ -11,6 +11,8 @@
 #include "device.h"
 #include "fb.h"
 #include "videobuf.h"
+#include "Burton.h"
+
 
 extern const char *vcam_dev_name;
 extern unsigned char allow_pix_conversion;
@@ -52,6 +54,7 @@ static const struct v4l2_frmsize_discrete vcam_sizes[] = {
 
 void vcam_update_format_cap(struct vcam_device *dev, bool keep_control)
 {
+    BURTON_BASIC_PRINTF();
     vcam_in_queue_destroy(&dev->in_queue);
     dev->input_format.width = dev->output_format.width;
     dev->input_format.height = dev->output_format.height;
@@ -65,6 +68,7 @@ static int vcam_querycap(struct file *file,
                          void *priv,
                          struct v4l2_capability *cap)
 {
+    BURTON_BASIC_PRINTF();
     strcpy(cap->driver, vcam_dev_name);
     strcpy(cap->card, vcam_dev_name);
     strcpy(cap->bus_info, "platform: virtual");
@@ -78,6 +82,7 @@ static int vcam_enum_input(struct file *file,
                            void *priv,
                            struct v4l2_input *inp)
 {
+    BURTON_BASIC_PRINTF();
     if (inp->index >= 1)
         return -EINVAL;
 
@@ -90,11 +95,14 @@ static int vcam_enum_input(struct file *file,
 static int vcam_g_input(struct file *file, void *priv, unsigned int *i)
 {
     *i = 0;
+
+    BURTON_BASIC_PRINTF();
     return 0;
 }
 
 static int vcam_s_input(struct file *file, void *priv, unsigned int i)
 {
+    BURTON_BASIC_PRINTF();
     return (i >= 1) ? -EINVAL : 0;
 }
 
@@ -106,6 +114,7 @@ static int vcam_enum_fmt_vid_cap(struct file *file,
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
     int idx = f->index;
 
+    BURTON_BASIC_PRINTF();
     if (idx >= dev->nr_fmts)
         return -EINVAL;
 
@@ -120,6 +129,8 @@ static int vcam_g_fmt_vid_cap(struct file *file,
                               struct v4l2_format *f)
 {
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
+
+    BURTON_BASIC_PRINTF();
     if (dev->conv_crop_on) {
         memcpy(&f->fmt.pix, &dev->crop_output_format,
                sizeof(struct v4l2_pix_format));
@@ -133,6 +144,8 @@ static int vcam_g_fmt_vid_cap(struct file *file,
 static bool check_supported_pixfmt(struct vcam_device *dev, unsigned int fourcc)
 {
     int i;
+
+    BURTON_BASIC_PRINTF();
     for (i = 0; i < dev->nr_fmts; i++) {
         if (dev->out_fmts[i].fourcc == fourcc)
             break;
@@ -147,6 +160,7 @@ static int vcam_try_fmt_vid_cap(struct file *file,
 {
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
 
+    BURTON_BASIC_PRINTF();
     if (!check_supported_pixfmt(dev, f->fmt.pix.pixelformat)) {
         f->fmt.pix.pixelformat = dev->output_format.pixelformat;
         pr_debug("Unsupported\n");
@@ -246,6 +260,7 @@ static int vcam_s_fmt_vid_cap(struct file *file,
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
     struct vb2_queue *q = &dev->vb_out_vidq;
 
+    BURTON_BASIC_PRINTF();
     if (vb2_is_busy(q))
         return -EBUSY;
 
@@ -271,6 +286,7 @@ static int vcam_enum_frameintervals(struct file *file,
     struct v4l2_frmival_stepwise *frm_step;
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
 
+    BURTON_BASIC_PRINTF();
     if (fival->index > 0) {
         pr_debug("Index out of range\n");
         return -EINVAL;
@@ -313,6 +329,7 @@ static int vcam_g_parm(struct file *file,
     struct vcam_device *dev;
     struct v4l2_captureparm *cp;
 
+    BURTON_BASIC_PRINTF();
     if (sp->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
         return -EINVAL;
 
@@ -335,6 +352,7 @@ static int vcam_s_parm(struct file *file,
     struct vcam_device *dev;
     struct v4l2_captureparm *cp;
 
+    BURTON_BASIC_PRINTF();
     if (sp->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
         return -EINVAL;
 
@@ -360,6 +378,8 @@ static int vcam_enum_framesizes(struct file *filp,
     struct v4l2_frmsize_discrete *size_discrete;
 
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(filp);
+
+    BURTON_BASIC_PRINTF();
     if (!check_supported_pixfmt(dev, fsize->pixel_format))
         return -EINVAL;
 
@@ -838,6 +858,7 @@ struct vcam_device *create_vcam_device(size_t idx,
     if (!vcam)
         goto vcam_alloc_failure;
 
+    BURTON_BASIC_PRINTF();
     /* Register V4L2 device */
     snprintf(vcam->v4l2_dev.name, sizeof(vcam->v4l2_dev.name), "%s-%d",
              vcam_dev_name, (int) idx);
@@ -873,6 +894,7 @@ struct vcam_device *create_vcam_device(size_t idx,
         V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
 
     snprintf(vdev->name, sizeof(vdev->name), "%s-%d", vcam_dev_name, (int) idx);
+    pr_info("vdev->name=%s \n",vdev->name);
     video_set_drvdata(vdev, vcam);
 
     ret = video_register_device(vdev, VFL_TYPE_VIDEO, -1);

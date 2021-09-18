@@ -1,0 +1,8 @@
+ 1854  sudo modprobe -a videobuf2_vmalloc videobuf2_v4l2
+ 1855  sudo insmod vcam.ko 
+ 1856  dmesg 
+ 1857  ls /dev/
+ 1858  ls /dev/vide*
+ 1859  ls
+ 1860  vlc v4l2:///dev/video0 &
+

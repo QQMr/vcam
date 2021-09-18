@@ -11,6 +11,7 @@
 #include "device.h"
 #include "fb.h"
 #include "videobuf.h"
+#include "Burton.h"
 
 extern unsigned short devices_max;
 
@@ -221,6 +222,7 @@ int request_vcam_device(struct vcam_device_spec *dev_spec)
     int idx;
     unsigned long flags = 0;
 
+    BURTON_BASIC_PRINTF();
     if (!ctldev)
         return -ENODEV;
 
