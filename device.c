@@ -537,6 +537,8 @@ static void submit_noinput_buffer(struct vcam_out_buffer *buf,
     size_t rows = dev->output_format.height;
 
     int stripe_size = (rows / 255);
+
+    BURTON_BASIC_PRINTF();
     if (dev->output_format.pixelformat == V4L2_PIX_FMT_YUYV) {
         yuyv_tmp = 0x80808080;
 
@@ -697,6 +699,8 @@ static void submit_copy_buffer(struct vcam_out_buffer *out_buf,
     void *in_vbuf_ptr, *out_vbuf_ptr;
 
     in_vbuf_ptr = in_buf->data;
+
+     BURTON_BASIC_PRINTF();
     if (!in_vbuf_ptr) {
         pr_err("Input buffer is NULL in ready state\n");
         return;

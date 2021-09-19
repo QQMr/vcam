@@ -6,6 +6,7 @@
 #include <media/videobuf2-vmalloc.h>
 
 #include "videobuf.h"
+#include "Burton.h"
 
 static inline int init_vcam_in_buffer(struct vcam_in_buffer *buf, size_t size)
 {
@@ -80,6 +81,7 @@ static int vcam_out_queue_setup(struct vb2_queue *vq,
     struct vcam_device *dev = vb2_get_drv_priv(vq);
     unsigned long size = dev->output_format.sizeimage;
 
+    BURTON_BASIC_PRINTF();
     if (*nbuffers < 2)
         *nbuffers = 2;
 
@@ -96,11 +98,13 @@ static int vcam_out_buffer_prepare(struct vb2_buffer *vb)
 {
     struct vcam_device *dev = vb2_get_drv_priv(vb->vb2_queue);
     unsigned long size = dev->output_format.sizeimage;
+
+    BURTON_BASIC_PRINTF();
     if (vb2_plane_size(vb, 0) < size) {
         pr_err(KERN_ERR "data will not fit into buffer\n");
         return -EINVAL;
     }
-
+    BURTON_BASIC_INF("size = %lu",size);
     vb2_set_plane_payload(vb, 0, size);
     return 0;
 }
@@ -113,6 +117,8 @@ static void vcam_out_buffer_queue(struct vb2_buffer *vb)
     struct vcam_out_buffer *buf =
         container_of(vbuf, struct vcam_out_buffer, vb);
     struct vcam_out_queue *q = &dev->vcam_out_vidq;
+
+    BURTON_BASIC_PRINTF();
     buf->filled = 0;
 
     spin_lock_irqsave(&dev->out_q_slock, flags);
@@ -124,6 +130,7 @@ static int vcam_start_streaming(struct vb2_queue *q, unsigned int count)
 {
     struct vcam_device *dev = q->drv_priv;
 
+    BURTON_BASIC_PRINTF();
     /* Try to start kernel thread */
     dev->sub_thr_id = kthread_create(submitter_thread, dev, "vcam_submitter");
     if (!dev->sub_thr_id) {
@@ -142,6 +149,7 @@ static void vcam_stop_streaming(struct vb2_queue *vb2_q)
     struct vcam_out_queue *q = &dev->vcam_out_vidq;
     unsigned long flags = 0;
 
+    BURTON_BASIC_PRINTF();
     /* Stop running threads */
     if (dev->sub_thr_id)
         kthread_stop(dev->sub_thr_id);
@@ -162,12 +170,16 @@ static void vcam_stop_streaming(struct vb2_queue *vb2_q)
 static void vcam_outbuf_lock(struct vb2_queue *vq)
 {
     struct vcam_device *dev = vb2_get_drv_priv(vq);
+
+    BURTON_BASIC_PRINTF();
     mutex_lock(&dev->vcam_mutex);
 }
 
 static void vcam_outbuf_unlock(struct vb2_queue *vq)
 {
     struct vcam_device *dev = vb2_get_drv_priv(vq);
+
+    BURTON_BASIC_PRINTF();
     mutex_unlock(&dev->vcam_mutex);
 }
 

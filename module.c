@@ -3,6 +3,7 @@
 #include <linux/module.h>
 
 #include "control.h"
+#include "Burton.h"
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -40,6 +41,8 @@ static int __init vcam_init(void)
 {
     int i;
     int ret = create_control_device(CONTROL_DEV_NAME);
+
+    BURTON_BASIC_PRINTF();
     if (ret)
         goto failure;
 

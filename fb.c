@@ -7,6 +7,7 @@
 
 #include "fb.h"
 #include "videobuf.h"
+#include "Burton.h"
 
 struct vcamfb_info {
     struct fb_info info;
@@ -20,6 +21,8 @@ static int vcamfb_open(struct inode *ind, struct file *file)
     unsigned long flags = 0;
 
     struct vcam_device *dev = PDE_DATA(ind);
+
+    BURTON_BASIC_PRINTF();
     if (!dev) {
         pr_err("Private data field of PDE not initilized.\n");
         return -ENODEV;
@@ -43,6 +46,7 @@ static int vcamfb_release(struct inode *ind, struct file *file)
     unsigned long flags = 0;
     struct vcam_device *dev = PDE_DATA(ind);
 
+    BURTON_BASIC_PRINTF();
     spin_lock_irqsave(&dev->in_fh_slock, flags);
     dev->fb_isopen = false;
     spin_unlock_irqrestore(&dev->in_fh_slock, flags);
@@ -63,6 +67,8 @@ static ssize_t vcamfb_write(struct file *file,
     void *data;
 
     struct vcam_device *dev = file->private_data;
+
+    BURTON_BASIC_PRINTF();
     if (!dev) {
         pr_err("Private data field of file not initialized yet.\n");
         return 0;
@@ -159,6 +165,7 @@ static int vcam_fb_open(struct fb_info *info, int user)
     unsigned long flags = 0;
 
     struct vcam_device *dev = info->par;
+    BURTON_BASIC_PRINTF();
     if (!dev) {
         pr_err("Private data field of PDE not initilized.\n");
         return -ENODEV;
@@ -190,6 +197,8 @@ static ssize_t vcam_fb_write(struct fb_info *info,
     void *data;
 
     struct vcam_device *dev = info->par;
+
+    BURTON_BASIC_PRINTF();
     if (!dev) {
         pr_err("Private data field of file not initialized yet.\n");
         return 0;
@@ -245,6 +254,7 @@ static int vcam_fb_release(struct fb_info *info, int user)
     unsigned long flags = 0;
     struct vcam_device *dev = info->par;
 
+    BURTON_BASIC_PRINTF();
     spin_lock_irqsave(&dev->in_fh_slock, flags);
     dev->fb_isopen = false;
     spin_unlock_irqrestore(&dev->in_fh_slock, flags);
@@ -256,6 +266,8 @@ static int vcam_fb_check_var(struct fb_var_screeninfo *var,
                              struct fb_info *info)
 {
     int bpp;
+
+    BURTON_BASIC_PRINTF();
     if (!var->xres)
         var->xres = 1;
     if (!var->yres)
@@ -332,6 +344,7 @@ static int vcam_fb_check_var(struct fb_var_screeninfo *var,
 
 static int vcam_fb_set_par(struct fb_info *info)
 {
+    BURTON_BASIC_PRINTF();
     info->fix.visual = FB_VISUAL_TRUECOLOR;
     return 0;
 }
@@ -340,6 +353,8 @@ static int vcam_fb_mmap(struct fb_info *info, struct vm_area_struct *vma)
 {
     int ret =
         remap_vmalloc_range(vma, (void *) info->fix.smem_start, vma->vm_pgoff);
+    
+    BURTON_BASIC_PRINTF();
     if (ret < 0)
         return -EINVAL;
     ret = remap_vmalloc_range(
@@ -356,6 +371,8 @@ static int vcam_fb_setcolreg(u_int regno,
                              u_int transp,
                              struct fb_info *info)
 {
+
+    BURTON_BASIC_PRINTF();
     if (regno >= 256)
         return -EINVAL;
     if (info->fix.visual == FB_VISUAL_TRUECOLOR) {
