@@ -524,6 +524,8 @@ static inline void yuyv_to_rgb24_one_pix(void *dst,
     rgb[2] = (unsigned char) b;
 }
 
+static int Burton_test = 0;
+
 static void submit_noinput_buffer(struct vcam_out_buffer *buf,
                                   struct vcam_device *dev)
 {
@@ -557,13 +559,14 @@ static void submit_noinput_buffer(struct vcam_out_buffer *buf,
             yuyv_ptr++;
         }
     } else {
+        Burton_test++;
         for (i = 0; i < 255; i++) {
-            memset(vbuf_ptr, i, rowsize * stripe_size);
+            memset(vbuf_ptr, i+Burton_test, rowsize * stripe_size);
             vbuf_ptr += rowsize * stripe_size;
         }
 
         if (rows % 255)
-            memset(vbuf_ptr, 0xff, rowsize * (rows % 255));
+            memset(vbuf_ptr, 0xff+Burton_test, rowsize * (rows % 255));
     }
 
     buf->vb.vb2_buf.timestamp = ktime_get_ns();

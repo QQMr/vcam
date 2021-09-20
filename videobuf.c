@@ -90,7 +90,7 @@ static int vcam_out_queue_setup(struct vb2_queue *vq,
     sizes[0] = size;
     for (i = 1; i < VB2_MAX_PLANES; ++i)
         sizes[i] = 0;
-    pr_debug("queue_setup completed\n");
+    pr_debug("queue_setup nbuffers=%u completed\n",*nbuffers);
     return 0;
 }
 
@@ -109,6 +109,24 @@ static int vcam_out_buffer_prepare(struct vb2_buffer *vb)
     return 0;
 }
 
+static void Burton_caculateCount(struct list_head *q)
+{
+    struct list_head *pos;
+    int count = 0;
+    pos = q;
+    while( pos!= NULL )
+    {      
+        count++;
+        pos = pos->next;
+        if( pos == q)
+        {
+            //printk("same address");
+            break;
+        }
+    }
+    BURTON_BASIC_INF("count %d",count);
+}
+
 static void vcam_out_buffer_queue(struct vb2_buffer *vb)
 {
     unsigned long flags = 0;
@@ -123,6 +141,7 @@ static void vcam_out_buffer_queue(struct vb2_buffer *vb)
 
     spin_lock_irqsave(&dev->out_q_slock, flags);
     list_add_tail(&buf->list, &q->active);
+    Burton_caculateCount(&q->active);
     spin_unlock_irqrestore(&dev->out_q_slock, flags);
 }
 

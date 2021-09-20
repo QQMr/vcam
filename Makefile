@@ -23,3 +23,6 @@ install:
 
 remove:
 	sudo rmmod vcam.ko
+
+claer-message:
+	sudo dmesg -C
