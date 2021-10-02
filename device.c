@@ -854,6 +854,159 @@ static void fill_v4l2pixfmt(struct v4l2_pix_format *fmt,
     fmt->sizeimage = fmt->height * fmt->bytesperline;
 }
 
+
+//=================================//
+
+
+static int imx074_set_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	// struct v4l2_mbus_framefmt *mf = &format->format;
+	// const struct imx074_datafmt *fmt = imx074_find_datafmt(mf->code);
+	// struct i2c_client *client = v4l2_get_subdevdata(sd);
+	// struct imx074 *priv = to_imx074(client);
+
+	// if (format->pad)
+	// 	return -EINVAL;
+
+	// dev_dbg(sd->v4l2_dev->dev, "%s(%u)\n", __func__, mf->code);
+
+	// if (!fmt) {
+	// 	/* MIPI CSI could have changed the format, double-check */
+	// 	if (format->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+	// 		return -EINVAL;
+	// 	mf->code	= imx074_colour_fmts[0].code;
+	// 	mf->colorspace	= imx074_colour_fmts[0].colorspace;
+	// }
+
+	// mf->width	= IMX074_WIDTH;
+	// mf->height	= IMX074_HEIGHT;
+	// mf->field	= V4L2_FIELD_NONE;
+
+	// if (format->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+	// 	priv->fmt = fmt;
+	// else
+	// 	cfg->try_fmt = *mf;
+    BURTON_BASIC_PRINTF();
+	return 0;
+}
+
+static int imx074_get_fmt(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_format *format)
+{
+	// struct v4l2_mbus_framefmt *mf = &format->format;
+	// struct i2c_client *client = v4l2_get_subdevdata(sd);
+	// struct imx074 *priv = to_imx074(client);
+
+	// const struct imx074_datafmt *fmt = priv->fmt;
+
+	// if (format->pad)
+	// 	return -EINVAL;
+
+	// mf->code	= fmt->code;
+	// mf->colorspace	= fmt->colorspace;
+	// mf->width	= IMX074_WIDTH;
+	// mf->height	= IMX074_HEIGHT;
+	// mf->field	= V4L2_FIELD_NONE;
+    BURTON_BASIC_PRINTF();
+	return 0;
+}
+
+static int imx074_get_selection(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_selection *sel)
+{
+	// if (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
+	// 	return -EINVAL;
+
+	// sel->r.left = 0;
+	// sel->r.top = 0;
+	// sel->r.width = IMX074_WIDTH;
+	// sel->r.height = IMX074_HEIGHT;
+
+	// switch (sel->target) {
+	// case V4L2_SEL_TGT_CROP_BOUNDS:
+	// case V4L2_SEL_TGT_CROP:
+	// 	return 0;
+	// default:
+	// 	return -EINVAL;
+	// }
+    BURTON_BASIC_PRINTF();
+    return 0;
+}
+
+static int imx074_enum_mbus_code(struct v4l2_subdev *sd,
+		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_mbus_code_enum *code)
+{
+	// if (code->pad ||
+	//     (unsigned int)code->index >= ARRAY_SIZE(imx074_colour_fmts))
+	// 	return -EINVAL;
+
+	// code->code = imx074_colour_fmts[code->index].code;
+      BURTON_BASIC_PRINTF();
+	return 0;
+}
+
+static int imx074_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	// struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	/* MODE_SELECT: stream or standby */
+	// return reg_write(client, MODE_SELECT, !!enable);
+        BURTON_BASIC_PRINTF();
+    return 0;
+}
+
+static int imx074_s_power(struct v4l2_subdev *sd, int on)
+{
+	// struct i2c_client *client = v4l2_get_subdevdata(sd);
+	// struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
+	// struct imx074 *priv = to_imx074(client);
+
+	// return soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
+        BURTON_BASIC_PRINTF();
+    return 0;
+}
+
+static int imx074_g_mbus_config(struct v4l2_subdev *sd,
+				struct v4l2_mbus_config *cfg)
+{
+	// cfg->type = V4L2_MBUS_CSI2_DPHY;
+	// cfg->flags = V4L2_MBUS_CSI2_2_LANE |
+	// 	V4L2_MBUS_CSI2_CHANNEL_0 |
+	// 	V4L2_MBUS_CSI2_CONTINUOUS_CLOCK;
+    BURTON_BASIC_PRINTF();
+	return 0;
+}
+
+static const struct v4l2_subdev_video_ops imx074_subdev_video_ops = {
+	.s_stream	= imx074_s_stream,
+	.g_mbus_config	= imx074_g_mbus_config,
+};
+
+static const struct v4l2_subdev_core_ops imx074_subdev_core_ops = {
+	.s_power	= imx074_s_power,
+};
+
+static const struct v4l2_subdev_pad_ops imx074_subdev_pad_ops = {
+	.enum_mbus_code = imx074_enum_mbus_code,
+	.get_selection	= imx074_get_selection,
+	.get_fmt	= imx074_get_fmt,
+	.set_fmt	= imx074_set_fmt,
+};
+
+static const struct v4l2_subdev_ops imx074_subdev_ops = {
+	.core	= &imx074_subdev_core_ops,
+	.video	= &imx074_subdev_video_ops,
+	.pad	= &imx074_subdev_pad_ops,
+};
+
+//=================================//
+
+
 struct vcam_device *create_vcam_device(size_t idx,
                                        struct vcam_device_spec *dev_spec)
 {
@@ -944,6 +1097,19 @@ struct vcam_device *create_vcam_device(size_t idx,
 
     vcam->output_fps.numerator = 1001;
     vcam->output_fps.denominator = 30000;
+   
+
+
+    v4l2_subdev_init(&vcam->sd, &imx074_subdev_ops);
+    v4l2_set_subdevdata(&vcam->sd, vcam);
+    strncpy(vcam->sd.name, "test_subdevice", V4L2_SUBDEV_NAME_SIZE);
+    vcam->sd.flags = vcam->sd.flags|V4L2_SUBDEV_FL_HAS_DEVNODE;
+
+    ret = v4l2_device_register_subdev(&vcam->v4l2_dev, &vcam->sd);
+    ret = v4l2_device_register_subdev_nodes(&vcam->v4l2_dev);
+
+
+
 
     return vcam;
 
@@ -964,6 +1130,8 @@ void destroy_vcam_device(struct vcam_device *vcam)
 {
     if (!vcam)
         return;
+
+    v4l2_device_unregister_subdev(&vcam->sd);
 
     if (vcam->sub_thr_id)
         kthread_stop(vcam->sub_thr_id);

@@ -93,6 +93,10 @@ struct vcam_device {
     bool conv_pixfmt_on;
     bool conv_res_on;
     bool conv_crop_on;
+
+    /* v4l2 sub device*/
+    struct v4l2_subdev                sd;
+
 };
 
 struct vcam_device *create_vcam_device(size_t idx,
