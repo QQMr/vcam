@@ -13,9 +13,6 @@
 #include "videobuf.h"
 
 extern const char *vcam_dev_name;
-extern unsigned char allow_pix_conversion;
-extern unsigned char allow_scaling;
-extern unsigned char allow_cropping;
 
 struct __attribute__((__packed__)) rgb_struct {
     unsigned char r, g, b;
@@ -120,13 +117,7 @@ static int vcam_g_fmt_vid_cap(struct file *file,
                               struct v4l2_format *f)
 {
     struct vcam_device *dev = (struct vcam_device *) video_drvdata(file);
-    if (dev->conv_crop_on) {
-        memcpy(&f->fmt.pix, &dev->crop_output_format,
-               sizeof(struct v4l2_pix_format));
-    } else {
-        memcpy(&f->fmt.pix, &dev->output_format,
-               sizeof(struct v4l2_pix_format));
-    }
+    memcpy(&f->fmt.pix, &dev->output_format, sizeof(struct v4l2_pix_format));
     return 0;
 }
 
@@ -152,77 +143,8 @@ static int vcam_try_fmt_vid_cap(struct file *file,
         pr_debug("Unsupported\n");
     }
 
-    if (!dev->conv_res_on) {
-        pr_debug("Resolution conversion is %d\n", dev->conv_res_on);
-        f->fmt.pix.width = dev->output_format.width;
-        f->fmt.pix.height = dev->output_format.height;
-    }
-
-    if (dev->conv_res_on) {
-        int n_avail = ARRAY_SIZE(vcam_sizes);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
-        const struct v4l2_frmsize_discrete *sz = v4l2_find_nearest_size(
-            vcam_sizes, n_avail, width, height, vcam_sizes[n_avail - 1].width,
-            vcam_sizes[n_avail - 1].height);
-#else
-        const struct v4l2_discrete_probe vcam_probe = {vcam_sizes, n_avail};
-
-        const struct v4l2_frmsize_discrete *sz =
-            v4l2_find_nearest_format(&vcam_probe, vcam_sizes[n_avail - 1].width,
-                                     vcam_sizes[n_avail - 1].height);
-#endif
-        f->fmt.pix.width = sz->width;
-        f->fmt.pix.height = sz->height;
-        dev->output_format.width = sz->width;
-        dev->output_format.height = sz->height;
-
-        /* set the output_format on YUYV or SRGB*/
-        if (dev->output_format.pixelformat == V4L2_PIX_FMT_YUYV) {
-            dev->output_format.bytesperline = dev->output_format.width << 1;
-            dev->output_format.colorspace = V4L2_COLORSPACE_SMPTE170M;
-        } else {
-            dev->output_format.bytesperline = dev->output_format.width * 3;
-            dev->output_format.colorspace = V4L2_COLORSPACE_SRGB;
-        }
-        dev->output_format.sizeimage =
-            dev->output_format.bytesperline * dev->output_format.height;
-
-        /* resize the framebuffer */
-        vcamfb_update(dev);
-    }
-
-    if (dev->conv_crop_on) {
-        /* set the rectangular size for the cropping */
-        struct v4l2_rect *crop = &dev->crop_cap;
-        struct v4l2_rect r = {0, 0, f->fmt.pix.width, f->fmt.pix.height};
-        struct v4l2_rect min_r = {0, 0, r.width * 3 / 4, r.height * 3 / 4};
-        struct v4l2_rect max_r = {0, 0, r.width, r.height};
-        v4l2_rect_set_min_size(crop, &min_r);
-        v4l2_rect_set_max_size(crop, &max_r);
-        dev->crop_output_format = dev->output_format;
-        dev->crop_output_format.width = crop->width;
-        dev->crop_output_format.height = crop->height;
-        pr_debug("Output crop is %d", dev->conv_crop_on);
-
-        /* set the cropping v4l2_format on YUYV or SRGB */
-        f->fmt.pix.width = dev->crop_output_format.width;
-        f->fmt.pix.height = dev->crop_output_format.height;
-        f->fmt.pix.field = V4L2_FIELD_NONE;
-        if (f->fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) {
-            f->fmt.pix.bytesperline = dev->output_format.width << 1;
-            f->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
-        } else {
-            f->fmt.pix.bytesperline = dev->output_format.width * 3;
-            f->fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
-        }
-        f->fmt.pix.sizeimage =
-            f->fmt.pix.bytesperline * dev->output_format.height;
-
-        /* resize the framebuffer */
-        vcamfb_update(dev);
-
-        return 0;
-    }
+    f->fmt.pix.width = dev->output_format.width;
+    f->fmt.pix.height = dev->output_format.height;
 
     f->fmt.pix.field = V4L2_FIELD_NONE;
     if (f->fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) {
@@ -253,11 +175,7 @@ static int vcam_s_fmt_vid_cap(struct file *file,
     if (ret < 0)
         return ret;
 
-    if (dev->conv_crop_on) {
-        dev->crop_output_format = f->fmt.pix;
-    } else {
-        dev->output_format = f->fmt.pix;
-    }
+    dev->output_format = f->fmt.pix;
 
     pr_debug("Resolution set to %dx%d\n", dev->output_format.width,
              dev->output_format.height);
@@ -281,12 +199,10 @@ static int vcam_enum_frameintervals(struct file *file,
         return -EINVAL;
     }
 
-    if (!dev->conv_res_on) {
-        if ((fival->width != dev->input_format.width) ||
-            (fival->height != dev->input_format.height)) {
-            pr_debug("Unsupported resolution\n");
-            return -EINVAL;
-        }
+    if ((fival->width != dev->input_format.width) ||
+        (fival->height != dev->input_format.height)) {
+        pr_debug("Unsupported resolution\n");
+        return -EINVAL;
     }
 
     if ((fival->width % 2) || (fival->height % 2)) {
@@ -363,34 +279,13 @@ static int vcam_enum_framesizes(struct file *filp,
     if (!check_supported_pixfmt(dev, fsize->pixel_format))
         return -EINVAL;
 
-    if (!dev->conv_res_on) {
-        if (fsize->index > 0)
-            return -EINVAL;
+    if (fsize->index > 0)
+        return -EINVAL;
 
-        fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-        size_discrete = &fsize->discrete;
-        size_discrete->width = dev->input_format.width;
-        size_discrete->height = dev->input_format.height;
-    } else if (dev->conv_res_on) {
-        if (fsize->index > 0)
-            return -EINVAL;
-
-        fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-        size_discrete = &fsize->discrete;
-        size_discrete->width = dev->input_format.width;
-        size_discrete->height = dev->input_format.height;
-    } else {
-        if (fsize->index > 0)
-            return -EINVAL;
-
-        fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
-        fsize->stepwise.min_width = 64;
-        fsize->stepwise.max_width = 1280;
-        fsize->stepwise.step_width = 2;
-        fsize->stepwise.min_height = 64;
-        fsize->stepwise.max_height = 720;
-        fsize->stepwise.step_height = 2;
-    }
+    fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+    size_discrete = &fsize->discrete;
+    size_discrete->width = dev->input_format.width;
+    size_discrete->height = dev->input_format.height;
 
     return 0;
 }
@@ -882,23 +777,12 @@ struct vcam_device *create_vcam_device(size_t idx,
         goto video_regdev_failure;
     }
 
-    /* Setup conversion capabilities */
-    vcam->conv_res_on = (bool) allow_scaling;
-    vcam->conv_pixfmt_on = (bool) allow_pix_conversion;
-    vcam->conv_crop_on = (bool) allow_cropping;
-
     /* Alloc and set initial format */
-    if (vcam->conv_pixfmt_on) {
-        for (i = 0; i < ARRAY_SIZE(vcam_supported_fmts); i++)
-            vcam->out_fmts[i] = vcam_supported_fmts[i];
-        vcam->nr_fmts = i;
-    } else {
-        if (dev_spec && dev_spec->pix_fmt == VCAM_PIXFMT_YUYV)
-            vcam->out_fmts[0] = vcam_supported_fmts[1];
-        else
-            vcam->out_fmts[0] = vcam_supported_fmts[0];
-        vcam->nr_fmts = 1;
-    }
+    if (dev_spec && dev_spec->pix_fmt == VCAM_PIXFMT_YUYV)
+        vcam->out_fmts[0] = vcam_supported_fmts[1];
+    else
+        vcam->out_fmts[0] = vcam_supported_fmts[0];
+    vcam->nr_fmts = 1;
 
     fill_v4l2pixfmt(&vcam->output_format, dev_spec);
     fill_v4l2pixfmt(&vcam->input_format, dev_spec);

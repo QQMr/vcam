@@ -528,13 +528,8 @@ void vcamfb_update(struct vcam_device *dev)
     }
 
     /* reset the fb_var and fb_fix */
-    if (dev->conv_crop_on) {
-        info->var.xres = dev->crop_output_format.width;
-        info->var.yres = dev->crop_output_format.height;
-    } else {
-        info->var.xres = dev->output_format.width;
-        info->var.yres = dev->output_format.height;
-    }
+    info->var.xres = dev->output_format.width;
+    info->var.yres = dev->output_format.height;
     info->var.xres_virtual = dev->input_format.width;
     info->var.yres_virtual = dev->input_format.height;
     info->fix.line_length = dev->input_format.bytesperline;
