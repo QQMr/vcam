@@ -40,8 +40,6 @@ struct vcam_out_buffer {
 
 struct vcam_out_queue {
     struct list_head active;
-    int frame;
-    /* TODO: implement more */
 };
 
 struct vcam_device_format {

@@ -113,47 +113,6 @@ static ssize_t vcamfb_write(struct file *file,
     return to_be_copyied;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static struct proc_ops vcamfb_fops = {
-    .proc_open = vcamfb_open,
-    .proc_release = vcamfb_release,
-    .proc_write = vcamfb_write,
-};
-#else
-static struct file_operations vcamfb_fops = {
-    .owner = THIS_MODULE,
-    .open = vcamfb_open,
-    .release = vcamfb_release,
-    .write = vcamfb_write,
-};
-#endif
-
-struct proc_dir_entry *init_framebuffer(const char *proc_fname,
-                                        struct vcam_device *dev)
-{
-    struct proc_dir_entry *procf;
-
-    pr_debug("Creating framebuffer for /dev/%s\n", proc_fname);
-    procf = proc_create_data(proc_fname, 0666, NULL, &vcamfb_fops, dev);
-    if (!procf) {
-        pr_err("Failed to create procfs entry\n");
-        /* FIXME: report -ENODEV */
-        goto failure;
-    }
-
-failure:
-    return procf;
-}
-
-void destroy_framebuffer(const char *proc_fname)
-{
-    if (!proc_fname)
-        return;
-
-    pr_debug("Destroying framebuffer %s\n", proc_fname);
-    remove_proc_entry(proc_fname, NULL);
-}
-
 static int vcam_fb_open(struct fb_info *info, int user)
 {
     unsigned long flags = 0;

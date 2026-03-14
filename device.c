@@ -41,11 +41,6 @@ static const struct v4l2_file_operations vcam_fops = {
     .mmap = vb2_fop_mmap,
 };
 
-static const struct v4l2_frmsize_discrete vcam_sizes[] = {
-    {480, 360},
-    {VGA_WIDTH, VGA_HEIGHT},
-    {HD_720_WIDTH, HD_720_HEIGHT},
-};
 
 void vcam_update_format_cap(struct vcam_device *dev, bool keep_control)
 {
@@ -299,8 +294,8 @@ static const struct v4l2_ioctl_ops vcam_ioctl_ops = {
     .vidioc_g_fmt_vid_cap = vcam_g_fmt_vid_cap,
     .vidioc_try_fmt_vid_cap = vcam_try_fmt_vid_cap,
     .vidioc_s_fmt_vid_cap = vcam_s_fmt_vid_cap,
-    .vidioc_s_parm = vcam_g_parm,
-    .vidioc_g_parm = vcam_s_parm,
+    .vidioc_g_parm = vcam_g_parm,
+    .vidioc_s_parm = vcam_s_parm,
     .vidioc_enum_frameintervals = vcam_enum_frameintervals,
     .vidioc_enum_framesizes = vcam_enum_framesizes,
     .vidioc_reqbufs = vb2_ioctl_reqbufs,
