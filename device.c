@@ -363,34 +363,13 @@ static int vcam_enum_framesizes(struct file *filp,
     if (!check_supported_pixfmt(dev, fsize->pixel_format))
         return -EINVAL;
 
-    if (!dev->conv_res_on) {
-        if (fsize->index > 0)
-            return -EINVAL;
+    if (fsize->index > 0)
+        return -EINVAL;
 
-        fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-        size_discrete = &fsize->discrete;
-        size_discrete->width = dev->input_format.width;
-        size_discrete->height = dev->input_format.height;
-    } else if (dev->conv_res_on) {
-        if (fsize->index > 0)
-            return -EINVAL;
-
-        fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-        size_discrete = &fsize->discrete;
-        size_discrete->width = dev->input_format.width;
-        size_discrete->height = dev->input_format.height;
-    } else {
-        if (fsize->index > 0)
-            return -EINVAL;
-
-        fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
-        fsize->stepwise.min_width = 64;
-        fsize->stepwise.max_width = 1280;
-        fsize->stepwise.step_width = 2;
-        fsize->stepwise.min_height = 64;
-        fsize->stepwise.max_height = 720;
-        fsize->stepwise.step_height = 2;
-    }
+    fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+    size_discrete = &fsize->discrete;
+    size_discrete->width = dev->input_format.width;
+    size_discrete->height = dev->input_format.height;
 
     return 0;
 }
@@ -404,8 +383,8 @@ static const struct v4l2_ioctl_ops vcam_ioctl_ops = {
     .vidioc_g_fmt_vid_cap = vcam_g_fmt_vid_cap,
     .vidioc_try_fmt_vid_cap = vcam_try_fmt_vid_cap,
     .vidioc_s_fmt_vid_cap = vcam_s_fmt_vid_cap,
-    .vidioc_s_parm = vcam_g_parm,
-    .vidioc_g_parm = vcam_s_parm,
+    .vidioc_s_parm = vcam_s_parm,
+    .vidioc_g_parm = vcam_g_parm,
     .vidioc_enum_frameintervals = vcam_enum_frameintervals,
     .vidioc_enum_framesizes = vcam_enum_framesizes,
     .vidioc_reqbufs = vb2_ioctl_reqbufs,
@@ -783,7 +762,7 @@ int submitter_thread(void *data)
         computation_time_jiff = jiffies - computation_time_jiff;
         timeout = msecs_to_jiffies(timeout_ms);
         if (computation_time_jiff > timeout) {
-            int computation_time_ms = msecs_to_jiffies(computation_time_jiff);
+            int computation_time_ms = jiffies_to_msecs(computation_time_jiff);
             dev->output_fps.numerator = 1001;
             dev->output_fps.denominator = 1000 * computation_time_ms;
         } else if (timeout > computation_time_jiff) {
